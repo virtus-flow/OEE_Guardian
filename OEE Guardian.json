@@ -1,0 +1,804 @@
+{
+  "name": "OEE Guardian",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "virtus-oee-impulse",
+        "options": {
+          "responseCode": {
+            "values": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -64
+      ],
+      "id": "cd97b696-12f0-46ae-8758-832bddcbe5ba",
+      "name": "Webhook",
+      "webhookId": "76d0b6fc-9b3b-4f07-8502-72d29c3b7bca"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Buffer.from(new Date().toISOString()).toString(); // Timestamp\nconst date = new Date();\nconst hours = date.getHours();\nconst minutes = date.getMinutes();\nconst currentTimeInMinutes = hours * 60 + minutes;\n\nlet shift_name = \"\";\nlet is_pause = false;\n\n// 1. Дефиниција Смена и Пауза (у минутима од поноћи)\n// Смена 1: 06:00 (360) - 14:00 (840) | Пауза: 13:30 (810) - 14:30 (870)\n// Смена 2: 14:00 (840) - 22:00 (1320) | Пауза: 21:30 (1290) - 22:30 (1350)\n// Смена 3: 22:00 (1320) - 06:00 (360) | Пауза: 05:30 (330) - 06:30 (390)\n\nif (currentTimeInMinutes >= 360 && currentTimeInMinutes < 840) {\n    shift_name = \"Shift_1\";\n} else if (currentTimeInMinutes >= 840 && currentTimeInMinutes < 1320) {\n    shift_name = \"Shift_2\";\n} else {\n    shift_name = \"Shift_3\";\n}\n\n// 2. Провера Паузе\nconst pauses = [\n    { start: 810, end: 870 },  // 13:30 - 14:30\n    { start: 1290, end: 1350 }, // 21:30 - 22:30\n    { start: 330, end: 390 }    // 05:30 - 06:30\n];\n\nfor (let p of pauses) {\n    if (currentTimeInMinutes >= p.start && currentTimeInMinutes < p.end) {\n        is_pause = true;\n        break;\n    }\n}\n\n// 3. Генерисање јединственог Shift ID-а (нпр. 2026-03-20-Shift_1)\nconst shift_id = `${date.toISOString().split('T')[0]}-${shift_name}`;\n\nreturn {\n    shift_id,\n    shift_name,\n    is_pause,\n    timestamp: date.toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "3e56d75a-2435-4188-a09e-a2fae341e663",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dc2547fa-bf24-411a-a34d-7fcb44a515ce",
+              "leftValue": "={{ $json.is_pause }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -64
+      ],
+      "id": "76cbd0ac-c01d-46c5-bed6-b85e0d307c03",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "nlGLGre91Crmr5Tx",
+          "mode": "list",
+          "cachedResultName": "VIRTUS OEE GUARDIAN",
+          "cachedResultUrl": "/projects/SBtDyqA5Lg3ZT9Cn/datatables/nlGLGre91Crmr5Tx"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "shift_id",
+              "keyValue": "={{ $json.shift_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -64
+      ],
+      "id": "592b7894-bcc2-4421-8f28-851ec593d9b8",
+      "name": "Get row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d340725d-270b-49ea-8dd8-855f264a4f4b",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -64
+      ],
+      "id": "b43929ef-3e40-478d-b59a-d1e5d29c5252",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "nlGLGre91Crmr5Tx",
+          "mode": "list",
+          "cachedResultName": "VIRTUS OEE GUARDIAN",
+          "cachedResultUrl": "/projects/SBtDyqA5Lg3ZT9Cn/datatables/nlGLGre91Crmr5Tx"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "shift_id": "={{ $node[\"Code in JavaScript\"].json.shift_id }}",
+            "shift_name": "={{ $node[\"Code in JavaScript\"].json.shift_name }}",
+            "total_pieces": 1,
+            "good_pieces": 1,
+            "last_piece_time": "2026-03-20T18:48:51",
+            "bad_pieces": 0,
+            "operating_time_sec": 0,
+            "oee_percentage": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "shift_id",
+              "displayName": "shift_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "shift_name",
+              "displayName": "shift_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "total_pieces",
+              "displayName": "total_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "good_pieces",
+              "displayName": "good_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bad_pieces",
+              "displayName": "bad_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_piece_time",
+              "displayName": "last_piece_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "operating_time_sec",
+              "displayName": "operating_time_sec",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "oee_percentage",
+              "displayName": "oee_percentage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        32
+      ],
+      "id": "2390b343-bb2c-4504-8d6f-29b614ac2fe6",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. ПРЕУЗИМАЊЕ ПОДАТАКА СА ЗАШТИТОМ\nconst codeNode = $node[\"Code in JavaScript\"]?.json || {};\nconst dbNode = $node[\"Get row(s)\"]?.json || {};\n\nconst currentImpulse = new Date(codeNode.timestamp || new Date());\nconst lastPieceTime = new Date(dbNode.last_piece_time || codeNode.timestamp);\n\nconst prevGood = parseInt(dbNode.good_pieces) || 0;\nconst prevBad = parseInt(dbNode.bad_pieces) || 0;\nconst prevTotal = parseInt(dbNode.total_pieces) || 0;\n\n// 2. КАЛКУЛАЦИЈА ВРЕМЕНА\nconst deltaS = Math.floor((currentImpulse - lastPieceTime) / 1000);\n\n// 3. ПРАВИЛО КВАЛИТЕТА (> 15с = Bad)\nlet isGood = deltaS <= 15 ? 1 : 0;\nlet isBad = deltaS > 15 ? 1 : 0;\n\n// 4. НОВИ БРОЈЕВИ\nconst newTotal = prevTotal + 1;\nconst newGood = prevGood + isGood;\nconst newBad = prevBad + isBad;\n\n// 5. OEE МАТЕМАТИКА СА ЗАШТИТОМ ОД NULL ВРЕДНОСТИ\nconst idealTime = newTotal * 10; \n\n// Безбедно преузимање старта смене (користимо createdAtAI или садашње време)\nconst rawStart = dbNode.createdAtAI || dbNode.last_piece_time || codeNode.timestamp;\nconst shiftStartTime = new Date(rawStart);\n\n// Осигуравамо да actualTime никада не буде 0 или NaN\nlet actualTime = Math.floor((currentImpulse - shiftStartTime) / 1000);\nif (actualTime <= 0) actualTime = 10; \n\n// Калкулација процената\nconst quality = (newGood / newTotal) * 100;\nconst performance = Math.min((idealTime / actualTime) * 100, 100);\nconst oee = ((performance / 100) * (quality / 100)) * 100;\n\nreturn {\n  new_total: newTotal,\n  new_good: newGood,\n  new_bad: newBad,\n  current_timestamp: currentImpulse.toISOString(),\n  delta_s: deltaS,\n  oee_percentage: Number(oee.toFixed(2)) || 0,\n  quality_score: Number(quality.toFixed(2)) || 0,\n  performance_score: Number(performance.toFixed(2)) || 0\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -160
+      ],
+      "id": "208fad2e-e870-4d49-94ce-fb34579e9e87",
+      "name": "OEE Engine"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "nlGLGre91Crmr5Tx",
+          "mode": "list",
+          "cachedResultName": "VIRTUS OEE GUARDIAN",
+          "cachedResultUrl": "/projects/SBtDyqA5Lg3ZT9Cn/datatables/nlGLGre91Crmr5Tx"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get row(s)').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total_pieces": "={{ $json.new_total }}",
+            "good_pieces": "={{ $json.new_good }}",
+            "bad_pieces": "={{ $json.new_bad }}",
+            "last_piece_time": "={{ $json.current_timestamp }}",
+            "oee_percentage": "={{ $json.oee_percentage }}",
+            "operating_time_sec": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "shift_id",
+              "displayName": "shift_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "shift_name",
+              "displayName": "shift_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "total_pieces",
+              "displayName": "total_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "good_pieces",
+              "displayName": "good_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bad_pieces",
+              "displayName": "bad_pieces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_piece_time",
+              "displayName": "last_piece_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "operating_time_sec",
+              "displayName": "operating_time_sec",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "oee_percentage",
+              "displayName": "oee_percentage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        -160
+      ],
+      "id": "c1a59057-d19c-4732-ab18-56984c778c2e",
+      "name": "Update row(s)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9c4ca7f6-b1d2-4cce-84af-e25016e9d4fa",
+              "leftValue": "={{ $json.oee_percentage }}",
+              "rightValue": 75,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        -160
+      ],
+      "id": "49a54fe1-4cc1-45d3-8890-15524bf550e4",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{887715950}}",
+        "text": "=📅 Датум: {{ $node[\"Get row(s)\"].json.shift_id.split('-').slice(0,3).join('-') }}\n🏗️ Смена: {{ $node[\"Code in JavaScript\"].json.shift_name }}\n\n📊 **LIVE OEE: {{ $node[\"Code in JavaScript\"].json.oee_percentage }}%**\n📦 Укупно: {{ $node[\"Code in JavaScript\"].json.new_total }}\n✅ Исправних: {{ $node[\"Code in JavaScript\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Code in JavaScript\"].json.bad_pieces }}\n\nБрзина: {{ $node[\"Code in JavaScript\"].json.performance_score }}%\nКвалитет: {{ $node[\"Code in JavaScript\"].json.quality_score }}%\n\nСтатус: {{ $node[\"Code in JavaScript\"].json.delta_s > 15 ? \"СПОРО 🐢\" : \"ОК ✅\" }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        -160
+      ],
+      "id": "7680fbf1-10f0-4146-9dca-1f8dbbc75e34",
+      "name": "Send a text message",
+      "webhookId": "459c6e4c-005a-4209-bcbc-b5d3811cc955",
+      "credentials": {
+        "telegramApi": {
+          "id": "gSI9aTsw79CGm7HZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        256
+      ],
+      "id": "8ce59514-371b-41b3-be2a-7a9fc5ff9f7d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "nlGLGre91Crmr5Tx",
+          "mode": "list",
+          "cachedResultName": "VIRTUS OEE GUARDIAN",
+          "cachedResultUrl": "/projects/SBtDyqA5Lg3ZT9Cn/datatables/nlGLGre91Crmr5Tx"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "shift_id",
+              "keyValue": "={{ $json.shift_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        256
+      ],
+      "id": "ccbd00d8-1516-4504-a561-1828da2cc7f9",
+      "name": "Get row(s)1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Buffer.from(new Date().toISOString()).toString(); // Timestamp\nconst date = new Date();\nconst hours = date.getHours();\nconst minutes = date.getMinutes();\nconst currentTimeInMinutes = hours * 60 + minutes;\n\nlet shift_name = \"\";\nlet is_pause = false;\n\n// 1. Дефиниција Смена и Пауза (у минутима од поноћи)\n// Смена 1: 06:00 (360) - 14:00 (840) | Пауза: 13:30 (810) - 14:30 (870)\n// Смена 2: 14:00 (840) - 22:00 (1320) | Пауза: 21:30 (1290) - 22:30 (1350)\n// Смена 3: 22:00 (1320) - 06:00 (360) | Пауза: 05:30 (330) - 06:30 (390)\n\nif (currentTimeInMinutes >= 360 && currentTimeInMinutes < 840) {\n    shift_name = \"Shift_1\";\n} else if (currentTimeInMinutes >= 840 && currentTimeInMinutes < 1320) {\n    shift_name = \"Shift_2\";\n} else {\n    shift_name = \"Shift_3\";\n}\n\n// 2. Провера Паузе\nconst pauses = [\n    { start: 810, end: 870 },  // 13:30 - 14:30\n    { start: 1290, end: 1350 }, // 21:30 - 22:30\n    { start: 330, end: 390 }    // 05:30 - 06:30\n];\n\nfor (let p of pauses) {\n    if (currentTimeInMinutes >= p.start && currentTimeInMinutes < p.end) {\n        is_pause = true;\n        break;\n    }\n}\n\n// 3. Генерисање јединственог Shift ID-а (нпр. 2026-03-20-Shift_1)\nconst shift_id = `${date.toISOString().split('T')[0]}-${shift_name}`;\n\nreturn {\n    shift_id,\n    shift_name,\n    is_pause,\n    timestamp: date.toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        256
+      ],
+      "id": "755bdb97-c634-4f04-8046-9d4099c4abce",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. ПРЕУЗИМАЊЕ ПОДАТАКА (n8n v1.0+ стандард)\nconst inputData = $input.first().json; \nconst lastPieceRaw = inputData.last_piece_time;\n\nif (!lastPieceRaw) return { should_alert: false, status: \"EMPTY_DB\" };\n\nconst now = new Date();\nconst lastSeen = new Date(lastPieceRaw);\nconst diffSeconds = Math.floor((now - lastSeen) / 1000);\nconst diffMinutes = Math.floor(diffSeconds / 60);\n\n// 2. ПРОВЕРА ПАУЗА\nconst currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();\nlet isPlannedPause = false;\nconst pauses = [{start: 810, end: 870}, {start: 1290, end: 1350}, {start: 330, end: 390}];\n\nfor (let p of pauses) {\n    if (currentTimeInMinutes >= p.start && currentTimeInMinutes < p.end) {\n        isPlannedPause = true; break;\n    }\n}\n\n// 3. ЛОГИКА АЛАРМА\nconst shouldAlert = diffMinutes >= 3 && !isPlannedPause;\n\nreturn {\n  should_alert: shouldAlert,\n  minutes_silent: diffMinutes,\n  last_active: lastSeen.toLocaleTimeString('sr-RS'),\n  telegram_msg: shouldAlert ? `🚨 **LINIJA STOJI!**\\nСтоји већ: **${diffMinutes} min**\\nПоследњи сигнал: ${lastSeen.toLocaleTimeString('sr-RS')}` : \"OK\"\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        256
+      ],
+      "id": "2ee23c5a-a846-431d-b7f4-43817a7d52e9",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "chatId": "={{887715950}}",
+        "text": "=📅 Датум: {{ $node[\"Get row(s)1\"].json.shift_id.split('-').slice(0,3).join('-') }}\n🏗️ Смена: {{ $('Code in JavaScript1').item.json.shift_id }}\n\n📈 Финални OEE: {{ $node[\"Get row(s)1\"].json.oee_percentage }}%\n📦 Укупно комада: {{ $node[\"Get row(s)1\"].json.total_pieces }}\n✅ Исправних: {{ $node[\"Get row(s)1\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Get row(s)1\"].json.bad_pieces }}\n\nСистем Virtus OEE Guardian – Извештај генерисан аутоматски.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        256
+      ],
+      "id": "17171de8-415a-4f48-8c06-fc7b6e0644f9",
+      "name": "Send a text message1",
+      "webhookId": "cfeb68ce-f105-494d-87b6-26409b20f379",
+      "credentials": {
+        "telegramApi": {
+          "id": "gSI9aTsw79CGm7HZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        480
+      ],
+      "id": "515c50e8-c8f5-4605-b855-68fec7263410",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "nlGLGre91Crmr5Tx",
+          "mode": "list",
+          "cachedResultName": "VIRTUS OEE GUARDIAN",
+          "cachedResultUrl": "/projects/SBtDyqA5Lg3ZT9Cn/datatables/nlGLGre91Crmr5Tx"
+        },
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        480
+      ],
+      "id": "0607286f-8766-4beb-8e2a-0976e967eb15",
+      "name": "Get row(s)2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Buffer.from(new Date().toISOString()).toString(); // Timestamp\nconst date = new Date();\nconst hours = date.getHours();\nconst minutes = date.getMinutes();\nconst currentTimeInMinutes = hours * 60 + minutes;\n\nlet shift_name = \"\";\nlet is_pause = false;\n\n// 1. Дефиниција Смена и Пауза (у минутима од поноћи)\n// Смена 1: 06:00 (360) - 14:00 (840) | Пауза: 13:30 (810) - 14:30 (870)\n// Смена 2: 14:00 (840) - 22:00 (1320) | Пауза: 21:30 (1290) - 22:30 (1350)\n// Смена 3: 22:00 (1320) - 06:00 (360) | Пауза: 05:30 (330) - 06:30 (390)\n\nif (currentTimeInMinutes >= 360 && currentTimeInMinutes < 840) {\n    shift_name = \"Shift_1\";\n} else if (currentTimeInMinutes >= 840 && currentTimeInMinutes < 1320) {\n    shift_name = \"Shift_2\";\n} else {\n    shift_name = \"Shift_3\";\n}\n\n// 2. Провера Паузе\nconst pauses = [\n    { start: 810, end: 870 },  // 13:30 - 14:30\n    { start: 1290, end: 1350 }, // 21:30 - 22:30\n    { start: 330, end: 390 }    // 05:30 - 06:30\n];\n\nfor (let p of pauses) {\n    if (currentTimeInMinutes >= p.start && currentTimeInMinutes < p.end) {\n        is_pause = true;\n        break;\n    }\n}\n\n// 3. Генерисање јединственог Shift ID-а (нпр. 2026-03-20-Shift_1)\nconst shift_id = `${date.toISOString().split('T')[0]}-${shift_name}`;\n\nreturn {\n    shift_id,\n    shift_name,\n    is_pause,\n    timestamp: date.toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        480
+      ],
+      "id": "6655c759-9586-4246-9c1a-7ab972b59b90",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "chatId": "={{887715950}}",
+        "text": "=🕒 **САТНИ ПРЕСЕК СТАЊА** 🕒\n\n🏗️ Смена: **{{ $node[\"Code in JavaScript3\"].json.shift_name }}**\n📊 Тренутни OEE: **{{ $node[\"Get row(s)2\"].json.oee_percentage }}%**\n\n📦 Произведено: {{ $node[\"Get row(s)2\"].json.total_pieces }}\n✅ Исправних: {{ $node[\"Get row(s)2\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Get row(s)2\"].json.bad_pieces }}\n\n*Следећи извештај за 60 минута.*",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        480
+      ],
+      "id": "dcd65480-602f-4b06-8bed-24f992854a0c",
+      "name": "Send a text message2",
+      "webhookId": "ae36e72e-dd5b-4166-8ad1-fe15ea2aa0ce",
+      "credentials": {
+        "telegramApi": {
+          "id": "gSI9aTsw79CGm7HZ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "OEE Engine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OEE Engine": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row(s)": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2007e8f5-bcac-493a-bd51-b749611164e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "641466bcd078904d878daad904c889b791adbd559bef687e56c27bd3f8259a82"
+  },
+  "id": "i7a0vqiyGBUBnMLK",
+  "tags": []
+}
