@@ -48,7 +48,7 @@
 
 ---
 
-##English
+## English
 
 An automated, real-time OEE (Overall Equipment Effectiveness) monitoring engine built on n8n. This system transforms raw machine pulses into actionable intelligence, providing live metrics, downtime alerts, and automated shift reporting via Telegram.
 
