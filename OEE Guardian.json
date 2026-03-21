@@ -422,7 +422,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{887715950}}",
+        "chatId": "={{}}",
         "text": "=📅 Датум: {{ $node[\"Get row(s)\"].json.shift_id.split('-').slice(0,3).join('-') }}\n🏗️ Смена: {{ $node[\"Code in JavaScript\"].json.shift_name }}\n\n📊 **LIVE OEE: {{ $node[\"Code in JavaScript\"].json.oee_percentage }}%**\n📦 Укупно: {{ $node[\"Code in JavaScript\"].json.new_total }}\n✅ Исправних: {{ $node[\"Code in JavaScript\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Code in JavaScript\"].json.bad_pieces }}\n\nБрзина: {{ $node[\"Code in JavaScript\"].json.performance_score }}%\nКвалитет: {{ $node[\"Code in JavaScript\"].json.quality_score }}%\n\nСтатус: {{ $node[\"Code in JavaScript\"].json.delta_s > 15 ? \"СПОРО 🐢\" : \"ОК ✅\" }}",
         "additionalFields": {}
       },
@@ -517,7 +517,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{887715950}}",
+        "chatId": "={{}}",
         "text": "=📅 Датум: {{ $node[\"Get row(s)1\"].json.shift_id.split('-').slice(0,3).join('-') }}\n🏗️ Смена: {{ $('Code in JavaScript1').item.json.shift_id }}\n\n📈 Финални OEE: {{ $node[\"Get row(s)1\"].json.oee_percentage }}%\n📦 Укупно комада: {{ $node[\"Get row(s)1\"].json.total_pieces }}\n✅ Исправних: {{ $node[\"Get row(s)1\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Get row(s)1\"].json.bad_pieces }}\n\nСистем Virtus OEE Guardian – Извештај генерисан аутоматски.",
         "additionalFields": {}
       },
@@ -592,7 +592,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{887715950}}",
+        "chatId": "={{}}",
         "text": "=🕒 **САТНИ ПРЕСЕК СТАЊА** 🕒\n\n🏗️ Смена: **{{ $node[\"Code in JavaScript3\"].json.shift_name }}**\n📊 Тренутни OEE: **{{ $node[\"Get row(s)2\"].json.oee_percentage }}%**\n\n📦 Произведено: {{ $node[\"Get row(s)2\"].json.total_pieces }}\n✅ Исправних: {{ $node[\"Get row(s)2\"].json.good_pieces }}\n❌ Шкарт: {{ $node[\"Get row(s)2\"].json.bad_pieces }}\n\n*Следећи извештај за 60 минута.*",
         "additionalFields": {}
       },
